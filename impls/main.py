@@ -115,11 +115,11 @@ def main(_):
                 eval_agent = jax.device_put(agent, device=jax.devices('cpu')[0])
             else:
                 eval_agent = agent
-            renders = []
             eval_metrics = {}
             overall_metrics = defaultdict(list)
             task_infos = env.unwrapped.task_infos if hasattr(env.unwrapped, 'task_infos') else env.task_infos
             num_tasks = FLAGS.eval_tasks if FLAGS.eval_tasks is not None else len(task_infos)
+
             for task_id in tqdm.trange(1, num_tasks + 1):
                 task_name = task_infos[task_id - 1]['task_name']
                 eval_info, trajs, cur_renders = evaluate(
@@ -133,7 +133,7 @@ def main(_):
                     eval_temperature=FLAGS.eval_temperature,
                     eval_gaussian=FLAGS.eval_gaussian,
                 )
-                renders.extend(cur_renders)
+
                 metric_names = ['success']
                 eval_metrics.update(
                     {f'evaluation/{task_name}_{k}': v for k, v in eval_info.items() if k in metric_names}
@@ -141,13 +141,12 @@ def main(_):
                 for k, v in eval_info.items():
                     if k in metric_names:
                         overall_metrics[k].append(v)
+
+                if FLAGS.video_episodes > 0 and len(cur_renders) > 0:
+                    eval_metrics[f'video/{task_name}'] = get_wandb_video(renders=cur_renders, n_cols=1)
+
             for k, v in overall_metrics.items():
                 eval_metrics[f'evaluation/overall_{k}'] = np.mean(v)
-
-            if FLAGS.video_episodes > 0:
-                video = get_wandb_video(renders=renders, n_cols=num_tasks)
-                eval_metrics['video'] = video
-
             wandb.log(eval_metrics, step=i)
             eval_logger.log(eval_metrics, step=i)
 
