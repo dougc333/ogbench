@@ -1,3 +1,8 @@
+import os
+os.environ["MUJOCO_GL"] = "egl"
+os.environ["PYOPENGL_PLATFORM"] = "egl"
+
+
 import json
 import os
 import random
@@ -16,6 +21,8 @@ from utils.env_utils import make_env_and_datasets
 from utils.evaluation import evaluate
 from utils.flax_utils import restore_agent, save_agent
 from utils.log_utils import CsvLogger, get_exp_name, get_flag_dict, get_wandb_video, setup_wandb
+
+
 
 FLAGS = flags.FLAGS
 
